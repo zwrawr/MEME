@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<videoList version="sample">
+    <video id="20120213a2">
+        <title>Monsters Inc.</title>
+        <filename>monstersinc_high.mpg</filename>
+    </video>
+    <video id="20120102b7">
+        <title>Avengers</title>
+        <filename>avengers-featurehp.mp4</filename>
+    </video>
+    <video id="20120102b4">
+        <title>Prometheus</title>
+        <filename>prometheus-featureukFhp.mp4</filename>
+    </video>
+</videoList>
