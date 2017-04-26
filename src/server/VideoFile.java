@@ -1,7 +1,11 @@
 package server;
 
-public class VideoFile {
+import java.io.Serializable;
 
+public class VideoFile implements Serializable{  
+
+	private static final long serialVersionUID = 7030558376409956459L;
+	
 	private String id;
 	private String title = "title";
 	private String filename = "filename";
@@ -18,16 +22,22 @@ public class VideoFile {
 		this.filename = newFilename;
 	}
 
-	public Object getID() {
+	public String getID() {
 		return this.id;
 	}
 
-	public Object getTitle() {
+	public String getTitle() {
 		return this.title;
 	}
 
-	public Object getFilename() {
+	public String getFilename() {
 		return this.filename;
 	}
 
+	@Override
+	public String toString() {
+		return "VideoFile [id=" + id + ", title=" + title + ", filename=" + filename + "]";
+	}
+
+	
 }
