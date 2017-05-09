@@ -1,7 +1,10 @@
-package server;
+package meme.server;
 
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
+
+import meme.common.VideoFile;
+
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;

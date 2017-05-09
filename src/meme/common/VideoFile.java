@@ -1,4 +1,4 @@
-package server;
+package meme.common;
 
 import java.io.Serializable;
 

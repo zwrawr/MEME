@@ -1,7 +1,11 @@
-package server;
+package meme.server;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import meme.common.VideoFile;
+
 import static org.junit.Assert.*;
 
 import java.io.IOException;
@@ -18,6 +22,11 @@ public class ServerTest {
 	@Before
 	public void setup(){
 		server = new Server();
+	}
+	
+	@After
+	public void cleanup(){
+		server.Stop();
 	}
 	
 	@Test

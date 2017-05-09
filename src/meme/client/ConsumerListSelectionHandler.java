@@ -1,4 +1,4 @@
-package client;
+package meme.client;
 
 import java.util.function.Consumer;
 
@@ -23,7 +23,7 @@ public class ConsumerListSelectionHandler implements ListSelectionListener {
         int Index = lsm.getLeadSelectionIndex();
         
         if (!lsm.isSelectionEmpty() && Index != selected) {
-            System.out.println("CLSHS:: Element : " + Index);
+            //System.out.println("CLSHS:: Element : " + Index);
             selected = Index;
             onSelected.accept(selected);
         }
