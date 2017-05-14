@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<theme name="MEME THEME">
+	<colorgroup name="Primary Colors">
+		<color name="control">#1c2e30</color>
+		<color name="info">#ecf0f1</color>
+		<color name="nimbusAlertYellow">#f1c40f</color>
+		<color name="nimbusBase">#34495e</color>
+		<color name="nimbusDisabledText">#4f4c4d</color>
+		<color name="nimbusFocus">#3498db</color>
+		<color name="nimbusGreen">#27ae60</color>
+		<color name="nimbusInfoBlue">#3498db</color>
+		<color name="nimbusLightBackground">#2f4c6d</color>
+		<color name="nimbusOrange">#d35400</color>
+		<color name="nimbusRed">#e74c3c</color>
+		<color name="nimbusSelectedText">#ecf0f1</color>
+		<color name="nimbusSelectionBackground">#1abc9c</color>
+		<color name="text">#7f8c8d</color>
+	</colorgroup>
+</theme>

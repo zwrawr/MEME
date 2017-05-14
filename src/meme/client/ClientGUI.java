@@ -1,11 +1,13 @@
 package meme.client;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -16,6 +18,9 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
+import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
@@ -32,6 +37,8 @@ public class ClientGUI {
 	private int width;
 	private int heigth;
 
+	private final String themePath = "./bin/meme/client/theme.xml";
+	
 	// GUI Components
 	private JFrame frame;
 	
@@ -57,12 +64,44 @@ public class ClientGUI {
 		this.width = w;
 		this.heigth = h;
 		
+		this.setUpLookAndFeel();
+		this.setUpCustomTheme();
+		
 		this.setUpVLC();
 		this.SetUpGUI();
 	}
 	
+	private void setUpLookAndFeel() {
+		System.out.println("CLIENTGUI:: Setting up Look and Feel");
+		
+		try {
+		    for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+		        if ("Nimbus".equals(info.getName())) {
+		            UIManager.setLookAndFeel(info.getClassName());
+		            break;
+		        }
+		    }
+		} catch (Exception e) {
+		    // If Nimbus is not available, then just use the default look and feel
+			System.out.println("CLIENTGUI:: couldn't load the nibus look and feel");
+			e.printStackTrace();
+		}
+	}
+	
+	private void setUpCustomTheme(){
+		HashMap<String,Color> theme = ThemeLoader.getTheme(this.themePath);
+		
+		if (theme == null){
+			return;
+		}
+		
+		theme.forEach((k,v)->{
+			UIManager.put(k,v);
+		});
+	}
+	
 	private void setUpVLC() {
-		System.out.println("Client:: Setting up VLC");
+		System.out.println("CLIENTGUI:: Setting up VLC");
 		
 		NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), vlcLibraryPath);
 		Native.loadLibrary(RuntimeUtil.getLibVlcLibraryName(), LibVlc.class);
@@ -70,7 +109,7 @@ public class ClientGUI {
 	
 	private void SetUpGUI(){
 		
-		System.out.println("Client:: Setting up GUI");
+		System.out.println("CLIENTGUI:: Setting up GUI");
 		
 		// Main Frame initialisation
 		this.frame = new JFrame();
@@ -81,7 +120,7 @@ public class ClientGUI {
 		this.frame.addWindowListener(new WindowAdapter(){
 			@Override
 			public void windowClosing(WindowEvent e){
-				System.out.println("CLIENT :: CLOSING");
+				System.out.println("CLIENTGUI :: CLOSING");
 				mediaPlayerComponent.release();
 			}
 		});
@@ -116,7 +155,7 @@ public class ClientGUI {
 	}
 	
 	private void updateSelection (Integer i){
-		System.out.println("Client:: A New Video Was Selected : " + i );
+		System.out.println("CLIENTGUI:: A New Video Was Selected : " + i );
 
 		if (i == null){
 			return;
@@ -203,7 +242,7 @@ public class ClientGUI {
 		}
 		else
 		{
-			System.out.println("CLIENT:: Cannot set the streaming url before the player has been created!");
+			System.out.println("CLIENTGUI:: Cannot set the streaming url before the player has been created!");
 		}
 	}
 	
