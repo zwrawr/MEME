@@ -141,10 +141,12 @@ public class Server {
 		String filename = "../"+vf.getFilename();
 				
 		String options = formatRtpStream("127.0.0.1", 5555);
+				
 		mediaPlayer.playMedia(filename, options, ":no-sout-rtp-sap", ":no-sout-standardsap",
 		":sout-all", ":sout-keep");
-		
-		System.out.println("Server:: Stopped Streaming " + vf.getTitle());
+				
+		mediaPlayer.parseMedia();
+		System.out.println("SERVER :: Length of video is : " + mediaPlayer.getLength()/1000);
 
 	}
 	

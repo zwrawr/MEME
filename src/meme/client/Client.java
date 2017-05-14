@@ -32,43 +32,20 @@ public class Client {
 	private ObjectInputStream input;
 	private ObjectOutputStream output;
 	
-	
-	// GUI Components
-	private JFrame frame;
-	private final int width = 800, height = 600;
-	
-	private JLabel TitleLabel;
-	private JLabel FileNameLabel;
-	private JLabel IDLabel;
-	
-	DefaultListModel<String> videoListModel;
-	
-	// VLC
-	
-	private String vlcLibraryPath = "..\\vlc-2.0.1";
-	private VideoFile currentVideoFile = null;
-	private EmbeddedMediaPlayerComponent mediaPlayerComponent;
-	private EmbeddedMediaPlayer mediaPlayer;
-	
-	private PlayerControlsPanel controlsPanel;
-	
+	String streamURL = "rtp://@" + serverIP + ":" + "5555";
+
+	//GUI
+	private ClientGUI gui;
+
 	public Client(){
-		setUpVLC();
-		SetUpGUI();
+		this.gui = new ClientGUI(600,400);
+		this.gui.setStreamURL(streamURL);
+		
+		this.gui.addOnSelectionChangedConsumer((vf) -> {updateServerStreaming(vf);});
+		
 		setUpNetworkConnection();
 	}
-	
-	/*----------------- Setup Methods -------------------*/
-	
-	
-	private void setUpVLC() {
-		System.out.println("Client:: Setting up VLC");
-
-		NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), vlcLibraryPath);
-		Native.loadLibrary(RuntimeUtil.getLibVlcLibraryName(), LibVlc.class);
 		
-	}
-	
 	private void setUpNetworkConnection(){
 		
 		System.out.println("Client:: Setting up Networking");
@@ -96,12 +73,13 @@ public class Client {
 	private void openInputStream(){
 		try {
 			this.input = new ObjectInputStream(this.socket.getInputStream());
-			this.updateVideoList((List<VideoFile>)this.input.readObject());
+			this.videoList = (List<VideoFile>)this.input.readObject();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
+		this.gui.updateVideoList(this.videoList);
 		System.out.println("Client:: Got " + this.videoList.size() +", videos");
 	}
 	
@@ -113,136 +91,17 @@ public class Client {
 		}
 		System.out.println("Client:: Finsihed Networking setup");
 	}
-
-	private void SetUpGUI(){
-		
-		System.out.println("Client:: Setting up GUI");
-		
-		// Main Frame initialisation
-		this.frame = new JFrame();
-		this.frame.setSize(this.width, this.height);
-		this.frame.setLayout(new BorderLayout());
-		
-		// Main Frame Listener
-		this.frame.addWindowListener(new WindowAdapter(){
-			@Override
-			public void windowClosing(WindowEvent e){
-				mediaPlayerComponent.release();
-			}
-		});
-
-		// Create and add all components to main frame
-		this.frame.add(createHeader(), BorderLayout.NORTH);
-		this.frame.add(createFooter(), BorderLayout.SOUTH);
-		this.frame.add(createVideo(), BorderLayout.CENTER);
-		this.frame.add(createList(), BorderLayout.WEST);
-		
-		// Display on screen
-		this.frame.setVisible(true);
-		
-	}
-
-	/* ---------------------- GUI Methods -----------------------*/
 	
-	private JPanel createList(){
-		JPanel listPanel = new JPanel();
-		
-		this.videoListModel = new DefaultListModel<String>();
-				
-		JList<String> list = new JList<String>(this.videoListModel);
-		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		list.setLayoutOrientation(JList.VERTICAL);
-		list.setVisibleRowCount(-1);
-		
-		Consumer<Integer> consumer = (i) -> updateSelection(i);
-		list.getSelectionModel().addListSelectionListener(new ConsumerListSelectionHandler(consumer));
-		
-		listPanel.add(list);
-		
-		return listPanel;
-	}
-	
-	private void updateSelection (Integer i){
-		System.out.println("Client:: A New Video Was Selected : " + i );
-		
-		VideoFile vf = this.videoList.get(i);
-		
-		this.IDLabel.setText("ID: " + vf.getID());
-		this.TitleLabel.setText("Title: " + vf.getTitle());
-		this.FileNameLabel.setText("FileName: " + vf.getFilename());
-
-		this.currentVideoFile = vf;
+	public void updateServerStreaming(VideoFile vf){
 		try {
 			this.output.writeObject(vf);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.out.println("CLIENT:: Couldn't tell the server to change what it was streaming."); 
 			e.printStackTrace();
 		}
-		
-		String stream = "rtp://@" + serverIP + ":" + "5555";
-		mediaPlayer.playMedia(stream);
-		
-		//String media = currentFileName;
-		//this.mediaPlayer.playMedia(media);
-		this.frame.validate();
+		System.out.println("CLIENT:: Told server to change stream"); 
+
 	}
-	
-	private void updateVideoList(List<VideoFile> vl){
-		this.videoList = vl;
-		
-		for(VideoFile vf : this.videoList){
-			this.videoListModel.addElement(vf.getTitle());
-			System.out.println(vf);
-		}
-	}
-	
-	private JPanel createVideo(){
-		
-		mediaPlayerComponent = new EmbeddedMediaPlayerComponent();
-		mediaPlayer = mediaPlayerComponent.getMediaPlayer();
-		controlsPanel = new PlayerControlsPanel(mediaPlayer);
-		
-		JPanel videoPanel = new JPanel();
-		videoPanel.setLayout(new BorderLayout());
-		videoPanel.add(mediaPlayerComponent, BorderLayout.CENTER);
-		videoPanel.add(controlsPanel, BorderLayout.SOUTH);
-		
-		return videoPanel;
-		
-	}
-	
-	private JPanel createFooter(){
-		JPanel footerPanel = new JPanel();
-		footerPanel.setLayout(new BoxLayout(footerPanel, BoxLayout.PAGE_AXIS));
-		
-		this.IDLabel = new JLabel();
-		this.TitleLabel = new JLabel();
-		this.FileNameLabel = new JLabel(); 
-		
-		// File data display
-		this.IDLabel.setText("ID: ");
-		this.TitleLabel.setText("Title: ");
-		this.FileNameLabel.setText("FileName: ");
-		
-		footerPanel.add(this.TitleLabel);
-		footerPanel.add(this.FileNameLabel);
-		footerPanel.add(this.IDLabel);
-		
-		return footerPanel;
-	}
-	
-	private JPanel createHeader(){
-		JPanel headerPanel = new JPanel();
-		headerPanel.setLayout(new FlowLayout());
-		
-		JLabel Title = new JLabel();
-		Title.setText("Player");
-		
-		headerPanel.add(Title);
-		return headerPanel;
-	}
-	
-	
 	
 	public static void main (String[] args){
 		System.out.println("Client:: Starting");
