@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,8 +19,6 @@ import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.UnsupportedLookAndFeelException;
-
 import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
 
@@ -30,7 +27,6 @@ import uk.co.caprica.vlcj.binding.LibVlc;
 import uk.co.caprica.vlcj.component.EmbeddedMediaPlayerComponent;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.runtime.RuntimeUtil;
-import uk.co.caprica.vlcj.test.basic.PlayerControlsPanel;
 
 public class ClientGUI {
 	
@@ -121,6 +117,7 @@ public class ClientGUI {
 			@Override
 			public void windowClosing(WindowEvent e){
 				System.out.println("CLIENTGUI :: CLOSING");
+				mediaPlayerComponent.getMediaPlayer().stop();
 				mediaPlayerComponent.release();
 			}
 		});
@@ -194,12 +191,11 @@ public class ClientGUI {
 		mediaPlayer = mediaPlayerComponent.getMediaPlayer();
 				
 		controlsPanel = new PlayerControlsPanel(mediaPlayer);
-		
 		JPanel videoPanel = new JPanel();
 		videoPanel.setLayout(new BorderLayout());
 		videoPanel.add(mediaPlayerComponent, BorderLayout.CENTER);
 		videoPanel.add(controlsPanel, BorderLayout.SOUTH);
-				
+		
 		return videoPanel;
 		
 	}
