@@ -12,9 +12,7 @@ import com.sun.jna.NativeLibrary;
 
 import meme.common.VideoFile;
 import uk.co.caprica.vlcj.binding.LibVlc;
-import uk.co.caprica.vlcj.component.EmbeddedMediaPlayerComponent;
 import uk.co.caprica.vlcj.player.MediaPlayerFactory;
-import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.player.headless.HeadlessMediaPlayer;
 import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 
@@ -35,18 +33,66 @@ public class Server {
 	ObjectInputStream inputFromClient;
 	
 	// VLC
-	private String vlcLibraryPath = "..\\vlc-2.0.1";
+	private String vlcLibraryPath = ".\\vlc-2.0.1";
 		
 	public Server () {
+		
+		//Add shoutsown hook
+		addShutdownHook();
+		
+		//Setup VLC
+		setUpVLC();
+		
 		// get video list
 		XMLReader reader = new XMLReader();
 		videos = reader.getList(filename);
+		
+		for(VideoFile vf : videos){
+			vf.setImagename(ScreenShotter.getScreenShot(vf.getFilename()));
+		}
 					
 		// Start networking thread
 		socketThread = makeSocketThread();
 		socketThread.start();
 	}
 	
+	private void addShutdownHook() {
+		Runtime.getRuntime().addShutdownHook(new Thread()
+		{
+		    @Override
+		    public void run()
+		    {
+				System.out.println("SERVER:: closing");
+
+	        	try {
+					outputToClient.close();
+				} catch (IOException e) {
+					System.out.println("SERVER:: couldn't close output stream");
+					e.printStackTrace();
+				}		        
+	        	try {
+	        		inputFromClient.close();
+				} catch (IOException e) {
+					System.out.println("SERVER:: couldn't close input stream");
+					e.printStackTrace();
+				}
+	        	try {
+	        		clientSocket.close();
+				} catch (IOException e) {
+					System.out.println("SERVER:: couldn't close client socket");
+					e.printStackTrace();
+				}
+	        	try {
+	        		serverSocket.close();
+				} catch (IOException e) {
+					System.out.println("SERVER:: couldn't close server socket");
+					e.printStackTrace();
+				}
+		    }
+		});
+		
+	}
+
 	private Thread makeSocketThread(){
 		return new Thread("Socket") {
 			public void run() {
@@ -141,13 +187,21 @@ public class Server {
 		String filename = "../"+vf.getFilename();
 				
 		String options = formatRtpStream("127.0.0.1", 5555);
-				
+		
+		
 		mediaPlayer.playMedia(filename, options, ":no-sout-rtp-sap", ":no-sout-standardsap",
-		":sout-all", ":sout-keep");
-				
+				":sout-all", ":sout-keep");
 		mediaPlayer.parseMedia();
-		System.out.println("SERVER :: Length of video is : " + mediaPlayer.getLength()/1000);
 
+		
+		System.out.println("SERVER :: Length of video is : " + mediaPlayer.getLength()/1000);
+		
+		try {
+			outputToClient.writeObject((Long)mediaPlayer.getLength());
+		} catch (IOException e) {
+			System.out.println("SERVER :: Could not tell client length of video");
+			e.printStackTrace();
+		}
 	}
 	
 	private void setUpVLC() {
@@ -160,6 +214,8 @@ public class Server {
 	
 	private void writeListToSocket() throws IOException{
 		List<VideoFile> list = this.getList();
+		list.forEach((vf)->{vf.loadImage();});
+		
 		outputToClient.writeObject(list);
 	}
 
@@ -175,7 +231,7 @@ public class Server {
 	public static void main(String[] args) {
 		System.out.println("Server:: Starting");
 
-		Server s = new Server();
+		new Server();
 	}
 	
 	public void Stop(){

@@ -5,7 +5,6 @@ import javax.xml.parsers.DocumentBuilder;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
-import org.w3c.dom.Element;
 import java.io.File;
 
 import java.awt.Color;
@@ -31,29 +30,21 @@ public class ThemeLoader {
 			// Assume there is only one theme in the file
 			Node themeNode = doc.getChildNodes().item(0);
 			
-			NodeList ColorGroups = themeNode.getChildNodes();
 
-			for (int i = 0; i < ColorGroups.getLength(); i++) {
-				Node cg = ColorGroups.item(i);
+			NodeList Colors = themeNode.getChildNodes();
+
+			for (int j = 0; j < Colors.getLength(); j++) {
+				Node c = Colors.item(j);
 				
-				if (cg.getNodeName().equals("colorgroup")){
-					NodeList Colors = cg.getChildNodes();
-	
-					for (int j = 0; j < Colors.getLength(); j++) {
-						Node c = Colors.item(j);
-						
-						if (c != null && c.getNodeName() != null && c.getNodeName().equals("color")){
-							
-							String name = c.getAttributes().getNamedItem("name").getTextContent().toString();
-							String color = c.getTextContent();
-							
-							System.out.println("name: " + name);
-							System.out.println("color: " + color);
-							
-							theme.put(name, Color.decode(color));
-						}
-
-					}
+				if (c != null && c.getNodeName() != null && c.getNodeName().equals("color")){
+					
+					String name = c.getAttributes().getNamedItem("name").getTextContent().toString();
+					String color = c.getTextContent();
+					
+					//System.out.println("name: " + name);
+					//System.out.println("color: " + color);
+					
+					theme.put(name, Color.decode(color));
 				}
 			}
 	    } 

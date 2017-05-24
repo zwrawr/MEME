@@ -1,26 +1,12 @@
 package meme.client;
 
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.List;
-import java.util.function.Consumer;
-
-import javax.swing.*;
-
-import com.sun.jna.*;
-
 import meme.common.VideoFile;
-import uk.co.caprica.vlcj.binding.LibVlc;
-import uk.co.caprica.vlcj.component.EmbeddedMediaPlayerComponent;
-import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
-import uk.co.caprica.vlcj.runtime.RuntimeUtil;
-import uk.co.caprica.vlcj.test.basic.PlayerControlsPanel;
 
 public class Client {
 	
@@ -38,7 +24,7 @@ public class Client {
 	private ClientGUI gui;
 
 	public Client(){
-		this.gui = new ClientGUI(600,400);
+		this.gui = new ClientGUI(900,600);
 		this.gui.setStreamURL(streamURL);
 		
 		this.gui.addOnSelectionChangedConsumer((vf) -> {updateServerStreaming(vf);});
@@ -73,7 +59,11 @@ public class Client {
 	private void openInputStream(){
 		try {
 			this.input = new ObjectInputStream(this.socket.getInputStream());
-			this.videoList = (List<VideoFile>)this.input.readObject();
+			
+			Object obj = this.input.readObject();
+			if (obj instanceof List<?>){
+					this.videoList = (List<VideoFile>)obj;
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
@@ -93,6 +83,7 @@ public class Client {
 	}
 	
 	public void updateServerStreaming(VideoFile vf){
+		
 		try {
 			this.output.writeObject(vf);
 		} catch (IOException e) {
@@ -101,12 +92,26 @@ public class Client {
 		}
 		System.out.println("CLIENT:: Told server to change stream"); 
 
+		Long length = null;
+		try{
+			length = (Long)this.input.readObject();
+		}catch (IOException | ClassNotFoundException e) {
+			System.out.println("CLIENT:: Could not get length of video from server"); 
+			e.printStackTrace();
+		}
+		
+		if (length != null){
+			System.out.println("CLIENT:: media length " + length);
+			this.gui.setVideoLength(length);
+		}
+		
+		return;
 	}
 	
 	public static void main (String[] args){
 		System.out.println("Client:: Starting");
 
 		meme.server.Server.main(null);
-		Client client = new Client();
+		new Client();
 	}
 }

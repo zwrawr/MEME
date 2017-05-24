@@ -8,7 +8,7 @@ import javax.swing.event.ListSelectionListener;
 
 public class ConsumerListSelectionHandler implements ListSelectionListener {
 
-	int selected = 0; 
+	Integer selected = null; 
 	Consumer<Integer> onSelected;
 	
 	public ConsumerListSelectionHandler( Consumer<Integer> onSelected){
@@ -22,8 +22,7 @@ public class ConsumerListSelectionHandler implements ListSelectionListener {
 
         int Index = lsm.getLeadSelectionIndex();
         
-        if (!lsm.isSelectionEmpty() && Index != selected) {
-            //System.out.println("CLSHS:: Element : " + Index);
+        if (!lsm.isSelectionEmpty() && !(selected != null && Index == selected)) {
             selected = Index;
             onSelected.accept(selected);
         }

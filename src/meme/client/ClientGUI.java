@@ -2,7 +2,7 @@ package meme.client;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.FlowLayout;
+import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -10,15 +10,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
+
 import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
 
@@ -28,24 +34,30 @@ import uk.co.caprica.vlcj.component.EmbeddedMediaPlayerComponent;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 
-public class ClientGUI {
+public class ClientGUI extends JFrame{
+	
+	private static final long serialVersionUID = -2014216896640647119L;
 	
 	private int width;
 	private int heigth;
 
 	private final String themePath = "./bin/meme/client/theme.xml";
 	
-	// GUI Components
-	private JFrame frame;
-	
+	// GUI Components	
 	private JLabel TitleLabel;
 	private JLabel FileNameLabel;
 	private JLabel IDLabel;
 	
-	DefaultListModel<String> videoListModel;
+	private JPanel header;
+	private JPanel footer;
+	private JPanel video;
+	private JPanel menu;
+
+	
+	DefaultListModel<VideoFile> videoListModel;
 	
 	// VLC
-	private final String vlcLibraryPath = "..\\vlc-2.0.1";
+	private final String vlcLibraryPath = ".\\vlc-2.0.1";
 	
 	private List<VideoFile> videoList;
 	private Integer currentIndex = null;
@@ -57,11 +69,13 @@ public class ClientGUI {
 	List<Consumer<VideoFile>> onSelectionChanged;
 	
 	public ClientGUI (int w, int h){
+		super("Java Streaming Video Player");
+		
 		this.width = w;
 		this.heigth = h;
 		
+		this.setUpCustomTheme();		
 		this.setUpLookAndFeel();
-		this.setUpCustomTheme();
 		
 		this.setUpVLC();
 		this.SetUpGUI();
@@ -98,7 +112,6 @@ public class ClientGUI {
 	
 	private void setUpVLC() {
 		System.out.println("CLIENTGUI:: Setting up VLC");
-		
 		NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), vlcLibraryPath);
 		Native.loadLibrary(RuntimeUtil.getLibVlcLibraryName(), LibVlc.class);
 	}
@@ -108,12 +121,11 @@ public class ClientGUI {
 		System.out.println("CLIENTGUI:: Setting up GUI");
 		
 		// Main Frame initialisation
-		this.frame = new JFrame();
-		this.frame.setSize(this.width, this.heigth);
-		this.frame.setLayout(new BorderLayout());
+		this.setSize(this.width, this.heigth);
+		this.setLayout(new BorderLayout());
 		
 		// Main Frame Listener
-		this.frame.addWindowListener(new WindowAdapter(){
+		this.addWindowListener(new WindowAdapter(){
 			@Override
 			public void windowClosing(WindowEvent e){
 				System.out.println("CLIENTGUI :: CLOSING");
@@ -123,22 +135,29 @@ public class ClientGUI {
 		});
 
 		// Create and add all components to main frame
-		this.frame.add(createHeader(), BorderLayout.NORTH);
-		this.frame.add(createFooter(), BorderLayout.SOUTH);
-		this.frame.add(createVideo(), BorderLayout.CENTER);
-		this.frame.add(createList(), BorderLayout.WEST);
 		
-		// Display on screen
-		this.frame.setVisible(true);
+		this.header = createHeader();
+		this.footer = createFooter();
+		this.video = createVideo();
+		this.menu = createList();
 		
+		this.add(this.header, BorderLayout.NORTH);
+		this.add(this.footer, BorderLayout.SOUTH);
+		this.add(this.video, BorderLayout.CENTER);
+		this.add(this.menu, BorderLayout.WEST);
+		
+        SwingUtilities.updateComponentTreeUI(this);
+        this.setVisible(true);
 	}
 
 	private JPanel createList(){
 		JPanel listPanel = new JPanel();
-		
-		this.videoListModel = new DefaultListModel<String>();
+		listPanel.setLayout(new BorderLayout());
+
+		this.videoListModel = new DefaultListModel<VideoFile>();
 				
-		JList<String> list = new JList<String>(this.videoListModel);
+		JList<VideoFile> list = new JList<VideoFile>(this.videoListModel);
+        list.setCellRenderer(new VideoFileCellRenderer());
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.setLayoutOrientation(JList.VERTICAL);
 		list.setVisibleRowCount(-1);
@@ -146,21 +165,21 @@ public class ClientGUI {
 		Consumer<Integer> consumer = (i) -> updateSelection(i);
 		list.getSelectionModel().addListSelectionListener(new ConsumerListSelectionHandler(consumer));
 		
-		listPanel.add(list);
+		JScrollPane listScroll = new JScrollPane(list);		
+		listPanel.add(listScroll,BorderLayout.CENTER);
 		
 		return listPanel;
 	}
 	
 	private void updateSelection (Integer i){
-		System.out.println("CLIENTGUI:: A New Video Was Selected : " + i );
-
-		if (i == null){
+		if (i == null || i == this.currentIndex){
 			return;
 		}
-		
+		System.out.println("CLIENTGUI:: A New Video Was Selected : " + i );
 		this.currentIndex = i;
+
 		
-		VideoFile vf = this.videoList.get(i);
+		VideoFile vf = this.videoList.get(this.currentIndex);
 		
 		this.IDLabel.setText("ID: " + vf.getID());
 		this.TitleLabel.setText("Title: " + vf.getTitle());
@@ -173,15 +192,14 @@ public class ClientGUI {
 		}
 	
 		// We made changes to the GUI so we should re validate the frame.
-		this.frame.validate();
+		this.validate();
 	}
 	
 	public void updateVideoList(List<VideoFile> vl){
 		this.videoList = vl;
 		
 		for(VideoFile vf : this.videoList){
-			this.videoListModel.addElement(vf.getTitle());
-			System.out.println(vf);
+			this.videoListModel.addElement(vf);
 		}
 	}
 	
@@ -189,7 +207,7 @@ public class ClientGUI {
 		
 		mediaPlayerComponent = new EmbeddedMediaPlayerComponent();
 		mediaPlayer = mediaPlayerComponent.getMediaPlayer();
-				
+
 		controlsPanel = new PlayerControlsPanel(mediaPlayer);
 		JPanel videoPanel = new JPanel();
 		videoPanel.setLayout(new BorderLayout());
@@ -222,12 +240,30 @@ public class ClientGUI {
 	
 	private JPanel createHeader(){
 		JPanel headerPanel = new JPanel();
-		headerPanel.setLayout(new FlowLayout());
+		headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.LINE_AXIS));
 		
 		JLabel Title = new JLabel();
-		Title.setText("Player");
+		Title.setText("Streaming Media Player");
+		Title.putClientProperty("JComponent.sizeVariant", "large");
+
+		JButton menuButton = new JButton();
+		menuButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("meme/client/icon/menu.png")));
+		menuButton.setToolTipText("Menu");
+		menuButton.putClientProperty("JComponent.sizeVariant", "mini");
 		
-		headerPanel.add(Title);
+		menuButton.addActionListener((e) -> {
+			this.menu.setVisible(!this.menu.isVisible());
+			this.validate();
+		});
+		
+		JPanel titlePanel = new JPanel();
+		titlePanel.add(Title);
+		
+		headerPanel.add(menuButton,BorderLayout.WEST);
+		headerPanel.add(Box.createRigidArea(new Dimension(10,0)));
+
+		headerPanel.add(titlePanel,BorderLayout.CENTER);
+		
 		return headerPanel;
 	}
 
@@ -249,5 +285,10 @@ public class ClientGUI {
 		}
 		
 		this.onSelectionChanged.add(c);
+	}
+
+	public void setVideoLength(Long length) {
+		System.out.println("CLIENT:: media length " + mediaPlayer.getLength());
+		return;
 	}
 }
