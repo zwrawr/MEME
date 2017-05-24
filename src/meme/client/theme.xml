@@ -14,10 +14,8 @@
 	<color name="nimbusRed">#e74c3c</color>
 	<color name="nimbusSelectedText">#ecf0f1</color>
 	<color name="nimbusSelectionBackground">#1abc4c</color>
-		
 	<color name="textForeground">#7f8c8d</color>
 	<color name="text">#7f8c8d</color>
-	
 	<color name="Button.background">#1612f7</color>
 	<color name="Button.light">#12f716</color>
 	

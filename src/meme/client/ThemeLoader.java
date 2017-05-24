@@ -29,8 +29,6 @@ public class ThemeLoader {
 
 			// Assume there is only one theme in the file
 			Node themeNode = doc.getChildNodes().item(0);
-			
-
 			NodeList Colors = themeNode.getChildNodes();
 
 			for (int j = 0; j < Colors.getLength(); j++) {
@@ -40,9 +38,6 @@ public class ThemeLoader {
 					
 					String name = c.getAttributes().getNamedItem("name").getTextContent().toString();
 					String color = c.getTextContent();
-					
-					//System.out.println("name: " + name);
-					//System.out.println("color: " + color);
 					
 					theme.put(name, Color.decode(color));
 				}

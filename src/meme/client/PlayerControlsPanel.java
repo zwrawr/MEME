@@ -1,10 +1,5 @@
 package meme.client;
 
-/*
- * This file is based of a sample implimentaion provided in the jvlc
- * This version contains our own modifications to the class.
- */
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -13,16 +8,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -32,13 +23,17 @@ import uk.co.caprica.vlcj.player.MediaPlayer;
 import uk.co.caprica.vlcj.player.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 
-import meme.common.StopWatch;
 public class PlayerControlsPanel extends JPanel {
-
+	
+	////////////////////////// DESCRIPTION //////////////////////////
+	/*
+	 * This class covers the controls panel at the base of the player
+	 * This file is based of a sample implimentaion provided in the jvlc
+	 * This version contains our own modifications to the class.
+	 */
+	
 	private static final long serialVersionUID = 965571066165214265L;
-
-    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-
+	
     private final EmbeddedMediaPlayer mediaPlayer;
 
     private JLabel timeLabel;
@@ -53,23 +48,23 @@ public class PlayerControlsPanel extends JPanel {
 
     private JButton captureButton;
     private JButton fullScreenButton;
-    private StopWatch playbackStopWatch;
     
     private boolean mousePressedPlaying = false;
 
 	private ImageIcon muteSoundIcon;
 	private ImageIcon SoundIcon;
-
+	
+	
+	////////////////////////// CONSTRUCTOR //////////////////////////
+	
     public PlayerControlsPanel(EmbeddedMediaPlayer mediaPlayer) {
-        this.mediaPlayer = mediaPlayer;
-
-        playbackStopWatch = new StopWatch();
-        
+        this.mediaPlayer = mediaPlayer;        
         createUI();
-
-        executorService.scheduleAtFixedRate(new UpdateRunnable(mediaPlayer), 0L, 1L, TimeUnit.SECONDS);
     }
 
+    
+	//////////////////////////// METHODS ////////////////////////////
+    
     private void createUI() {
         createControls();
         layoutControls();        
@@ -79,12 +74,6 @@ public class PlayerControlsPanel extends JPanel {
     private void createControls() {
     	
         timeLabel = new JLabel("hh:mm:ss");
-
-        positionSlider = new JSlider();
-        positionSlider.setMinimum(0);
-        positionSlider.setMaximum(1000);
-        positionSlider.setValue(0);
-        positionSlider.setToolTipText("Position");
 
         stopButton = new JButton();
         stopButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("meme/client/icon/control_stop.png")));
@@ -121,22 +110,25 @@ public class PlayerControlsPanel extends JPanel {
         captureButton.setToolTipText("Take picture");
         captureButton.putClientProperty("JComponent.sizeVariant", "mini");
 
+        /* Not yet used in this release: */
+        positionSlider = new JSlider();
+        positionSlider.setMinimum(0);
+        positionSlider.setMaximum(1000);
+        positionSlider.setValue(0);
+        positionSlider.setToolTipText("Position");
+
         fullScreenButton = new JButton();
         fullScreenButton.setIcon(new ImageIcon(getClass().getClassLoader().getResource("meme/client/icon/fullscreen.png")));
         fullScreenButton.setToolTipText("Toggle full-screen");
         fullScreenButton.putClientProperty("JComponent.sizeVariant", "mini");
-
     }
 
     private void layoutControls() {
         setBorder(new EmptyBorder(4, 4, 4, 4));
-
         setLayout(new BorderLayout());
 
         JPanel positionPanel = new JPanel();
         positionPanel.setLayout(new GridLayout(1, 1));
-        // positionPanel.add(positionProgressBar);
-        //positionPanel.add(positionSlider);
 
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new BorderLayout(8, 0));
@@ -153,19 +145,14 @@ public class PlayerControlsPanel extends JPanel {
         bottomPanel.add(stopButton);
         bottomPanel.add(pauseButton);
         bottomPanel.add(playButton);
-
         bottomPanel.add(volumeSlider);
         bottomPanel.add(toggleMuteButton);
-
         bottomPanel.add(captureButton);
-
-
-        //bottomPanel.add(fullScreenButton);
 
         add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    /**
+    /*
      * Broken out position setting, handles updating mediaPlayer
      */
     private void setSliderBasedPosition() {
@@ -184,8 +171,7 @@ public class PlayerControlsPanel extends JPanel {
         if(!mediaPlayer.isPlaying()) {
             // Resume play or play a few frames then pause to show current position in video
             mediaPlayer.play();
-            playbackStopWatch.resume();
-            
+ 
             if(!mousePressedPlaying) {
                 try {
                     // Half a second probably gets an iframe
@@ -195,49 +181,16 @@ public class PlayerControlsPanel extends JPanel {
                     // Don't care if unblocked early
                 }
                 mediaPlayer.pause();
-                playbackStopWatch.pause();
             }
         }
-        long time = mediaPlayer.getTime();
-        int position = (int)(mediaPlayer.getPosition() * 1000.0f);
-        updateTime(time);
-        updatePosition(position);
     }
 
     private void registerListeners() {
-        mediaPlayer.addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
-            @Override
-            public void playing(MediaPlayer mediaPlayer) {
-//                updateVolume(mediaPlayer.getVolume());
-            }
-        });
-
-        positionSlider.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if(mediaPlayer.isPlaying()) {
-                    mousePressedPlaying = true;
-                    mediaPlayer.pause();
-                    playbackStopWatch.pause();
-                }
-                else {
-                    mousePressedPlaying = false;
-                }
-                setSliderBasedPosition();
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                setSliderBasedPosition();
-                updateUIState();
-            }
-        });
 
         stopButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 mediaPlayer.stop();
-                playbackStopWatch.stop();
             }
         });
 
@@ -245,7 +198,6 @@ public class PlayerControlsPanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 mediaPlayer.pause();
-                playbackStopWatch.pause();
             }
         });
 
@@ -253,7 +205,6 @@ public class PlayerControlsPanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 mediaPlayer.play();
-                playbackStopWatch.resume();
             }
         });
 
@@ -269,9 +220,7 @@ public class PlayerControlsPanel extends JPanel {
             @Override
             public void stateChanged(ChangeEvent e) {
                 JSlider source = (JSlider)e.getSource();
-                // if(!source.getValueIsAdjusting()) {
                 mediaPlayer.setVolume(source.getValue());
-                // }
             }
         });
 
@@ -281,54 +230,28 @@ public class PlayerControlsPanel extends JPanel {
                 mediaPlayer.saveSnapshot();
             }
         });
-
-        fullScreenButton.addActionListener(new ActionListener() {
+        
+        /* NOT AVAILABLE IN THIS RELEASE
+        positionSlider.addMouseListener(new MouseAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                mediaPlayer.toggleFullScreen();
+            public void mousePressed(MouseEvent e) {
+                if(mediaPlayer.isPlaying()) {
+                    mousePressedPlaying = true;
+                    mediaPlayer.pause();
+                }
+                else {
+                    mousePressedPlaying = false;
+                }
+                setSliderBasedPosition();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                setSliderBasedPosition();
+                updateUIState();
             }
         });
-
+		 */
+    	
     }
-
-    private final class UpdateRunnable implements Runnable {
-
-        private final MediaPlayer mediaPlayer;
-
-        private UpdateRunnable(MediaPlayer mediaPlayer) {
-            this.mediaPlayer = mediaPlayer;
-        }
-
-        @Override
-        public void run() {
-            final long time = mediaPlayer.getTime();
-            final int position = (int)(mediaPlayer.getPosition() * 1000.0f);
-
-            // Updates to user interface components must be executed on the Event
-            // Dispatch Thread
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    if(mediaPlayer.isPlaying()) {
-                        updateTime(time);
-                        updatePosition(position);
-                    }
-                }
-            });
-        }
-    }
-
-    private void updateTime(long millis) {
-        String s = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis), TimeUnit.MILLISECONDS.toMinutes(millis) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)), TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
-        timeLabel.setText(s);
-    }
-
-    private void updatePosition(int value) {
-        // positionProgressBar.setValue(value);
-        positionSlider.setValue(value);
-    }
-
-    /*private void updateVolume(int value) {
-        volumeSlider.setValue(value);
-    }*/
 }

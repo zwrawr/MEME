@@ -17,9 +17,18 @@ public class ClientTest {
 		meme.server.Server.main(null);
 		client = new Client();
 	}
-
+	
 	@Test
-	public void videoFileReturnsCorrectValue() {
+	public void videoListNotNull(){
+		// As client video list is instantiated as null, this checks that
+		// it has updated successfully.
+		assertTrue(client.videoList != null);
+	}
+	
+	@Test
+	public void videoListContentTest() {
+		// Tests that video list has received correct data from server 
+		// (confirming successful server communication)
 		List<VideoFile> videoList = client.videoList;
 		
 		VideoFile videoFile = videoList.get(0);

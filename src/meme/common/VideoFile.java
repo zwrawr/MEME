@@ -11,7 +11,9 @@ import java.io.Serializable;
 import javax.imageio.ImageIO;
 
 public class VideoFile implements Serializable{  
-
+	
+	////////////////////////// ATTRIBUTES ///////////////////////////
+	
 	private static final long serialVersionUID = 7030558376409956459L;
 	
 	private String id;
@@ -20,41 +22,59 @@ public class VideoFile implements Serializable{
 	private String imagename = "imagename";
 	private transient Image img = null; //has to be transient so that we can use custom serialization
 	
+	
+	////////////////////////// CONSTRUCTOR //////////////////////////
+	
 	public VideoFile(String id) {
 		this.id = id;
 	}
 	
-	public void setTitle (String newTitle){
-		this.title = newTitle;
-	}
 	
-	public void setFilename (String newFilename){
-		this.filename = newFilename;
-	}
+	//////////////////////////// METHODS ////////////////////////////
+	
+	private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        if (this.img != null){
+        	out.writeBoolean(true);
+        	ImageIO.write((RenderedImage) this.img, "png", out);
+        }
+    	out.writeBoolean(false);
 
-	public void setImagename (String newImagename){
-		this.imagename = newImagename;
-	}
-	
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        if (in.readBoolean()==true){
+        	this.img = ImageIO.read(in);
+        }
+    }
+    
 	public void loadImage (){
 		
-		if (this.img != null)
-		{
-			return;
+		if (this.img == null){
+			try {
+				this.img = ImageIO.read(new File(this.imagename));
+			} catch (IOException e) {
+				System.out.println("VIDEOFILE: Cannot load image at "+this.imagename);
+				e.printStackTrace();
+			}
+			System.out.println("VIDEOFILE: loaded image at "+this.imagename);
 		}
 		
-		try {
-			this.img = ImageIO.read(new File(this.imagename));
-		} catch (IOException e) {
-			System.out.println("VIDEOFILE: Cannot load image at "+this.imagename);
-			e.printStackTrace();
-		}
-		System.out.println("VIDEOFILE: loaded image at "+this.imagename);
+		
 	}
 	
 	public void unloadImage (){
 		this.img = null;
 	}
+	
+	@Override
+	public String toString() {
+		return "VideoFile [id=" + id + ", title=" + title + ", filename=" + filename + "]";
+	}
+    
+	
+	//////////////////////////// GETTERS ////////////////////////////
 	
 	public String getID() {
 		return this.id;
@@ -71,28 +91,19 @@ public class VideoFile implements Serializable{
 	public Image getImage(){
 		return this.img;
 	}
+
+
+	//////////////////////////// SETTERS ////////////////////////////
+    
+	public void setTitle (String newTitle){
+		this.title = newTitle;
+	}
 	
-	@Override
-	public String toString() {
-		return "VideoFile [id=" + id + ", title=" + title + ", filename=" + filename + "]";
+	public void setFilename (String newFilename){
+		this.filename = newFilename;
 	}
 
-	private void writeObject(ObjectOutputStream out) throws IOException {
-        out.defaultWriteObject();
-        
-        if (this.img != null){
-        	out.writeBoolean(true);
-        	ImageIO.write((RenderedImage) this.img, "png", out);
-        }
-    	out.writeBoolean(false);
-
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        
-        if (in.readBoolean()==true){
-        	this.img = ImageIO.read(in);
-        }
-    }
+	public void setImagename (String newImagename){
+		this.imagename = newImagename;
+	}
 }

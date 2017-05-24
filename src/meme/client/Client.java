@@ -8,9 +8,16 @@ import java.net.UnknownHostException;
 import java.util.List;
 import meme.common.VideoFile;
 
+
 public class Client {
+	////////////////////////// DESCRIPTION //////////////////////////
+	/* The CLient class is designed for communication between itself and the
+	server. Methods stored within this class are related to streaming data
+	between the two. All GUI code is stored within a seperate class:
+	ClientGUI. */
 	
-	// Server Comm.
+	////////////////////////// ATTRIBUTES ///////////////////////////
+	// Server Communication
 	public List<VideoFile> videoList;
 	private int serverPort = 1338;
 	private String serverIP = "127.0.0.1";
@@ -20,23 +27,41 @@ public class Client {
 	
 	String streamURL = "rtp://@" + serverIP + ":" + "5555";
 
-	//GUI
+	// GUI 
 	private ClientGUI gui;
-
+	
+	////////////////////////// CONSTRUCTOR //////////////////////////
 	public Client(){
+		// Set up GUI
 		this.gui = new ClientGUI(900,600);
 		this.gui.setStreamURL(streamURL);
-		
-		this.gui.addOnSelectionChangedConsumer((vf) -> {updateServerStreaming(vf);});
-		
+		// When videofile selected, send to server
+		this.gui.addOnSelectionChangedConsumer((vf) -> {writeToOutputStream(vf);});
+
+		// Set up Client-Server communication
 		setUpNetworkConnection();
+		
+		while(true){
+			Object obj = readFromInputStream();
+			if (obj instanceof List<?>){
+				this.videoList = (List<VideoFile>)obj;
+				// update GUI with new list data
+				this.gui.updateVideoList(this.videoList);
+				// Report
+				System.out.println("Client:: Got " + this.videoList.size() +", videos");
+			}
+		}
 	}
 		
+	
+	//////////////////////////// METHODS ////////////////////////////
+	
 	private void setUpNetworkConnection(){
 		
 		System.out.println("Client:: Setting up Networking");
 		
 		try {
+			// Attempt to connect to server socket
 			this.socket = new Socket(this.serverIP, this.serverPort);
 		} catch (UnknownHostException e) {
 			System.out.println("Client:: Unable to create socket, UnknownHost");
@@ -47,70 +72,56 @@ public class Client {
 		}
 		System.out.println("Client:: Opened Socket : "  + this.socket.toString());
 
-		
 		// Setup input stream
 		openInputStream();
-
 		// Setup Output Stream
 		openOutputStream();
+		
+		System.out.println("Client:: Finsihed Networking setup");
 
 	}
 	
 	private void openInputStream(){
 		try {
+			// Attempt creating input stream for VideoFile data
 			this.input = new ObjectInputStream(this.socket.getInputStream());
-			
-			Object obj = this.input.readObject();
-			if (obj instanceof List<?>){
-					this.videoList = (List<VideoFile>)obj;
-			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
 		}
-		this.gui.updateVideoList(this.videoList);
-		System.out.println("Client:: Got " + this.videoList.size() +", videos");
 	}
 	
 	private void openOutputStream(){
-		try {
+		try {			
+			// Create output stream for communication
 			this.output = new ObjectOutputStream(this.socket.getOutputStream());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println("Client:: Finsihed Networking setup");
 	}
 	
-	public void updateServerStreaming(VideoFile vf){
-		
+	private Object readFromInputStream(){
+		Object obj = null;
 		try {
-			this.output.writeObject(vf);
+			obj = this.input.readObject();
+		} catch (ClassNotFoundException | IOException e) {
+			System.out.println("Client:: Unable to read from input stream");
+			e.printStackTrace();
+		}
+		return obj;
+	}
+	
+	public void writeToOutputStream(Object obj){
+		try {
+			this.output.writeObject(obj);
 		} catch (IOException e) {
-			System.out.println("CLIENT:: Couldn't tell the server to change what it was streaming."); 
+			System.out.println("CLIENT:: Couldn't write object to stream: " + obj.toString()); 
 			e.printStackTrace();
-		}
-		System.out.println("CLIENT:: Told server to change stream"); 
-
-		Long length = null;
-		try{
-			length = (Long)this.input.readObject();
-		}catch (IOException | ClassNotFoundException e) {
-			System.out.println("CLIENT:: Could not get length of video from server"); 
-			e.printStackTrace();
-		}
-		
-		if (length != null){
-			System.out.println("CLIENT:: media length " + length);
-			this.gui.setVideoLength(length);
-		}
-		
+		}	
 		return;
 	}
 	
 	public static void main (String[] args){
 		System.out.println("Client:: Starting");
-
 		meme.server.Server.main(null);
 		new Client();
 	}

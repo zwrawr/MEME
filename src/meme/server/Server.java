@@ -11,7 +11,7 @@ import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
 
 import meme.common.VideoFile;
-import uk.co.caprica.vlcj.binding.LibVlc;
+import uk.co.caprica.vlcj.binding.LibVlc; 
 import uk.co.caprica.vlcj.player.MediaPlayerFactory;
 import uk.co.caprica.vlcj.player.headless.HeadlessMediaPlayer;
 import uk.co.caprica.vlcj.runtime.RuntimeUtil;
@@ -20,41 +20,75 @@ public class Server {
 	
 	// Video list data
 	private List<VideoFile> videos;
-	private String filename = "bin/videoList.xml";
+	private final String videoListDirectory = "bin/videoList.xml";
 	
 	// Networking
 	private final int port = 1338;
 	private ServerSocket serverSocket;
-	Socket clientSocket;
-	
-	Thread socketThread;
-	
-	ObjectOutputStream outputToClient;
-	ObjectInputStream inputFromClient;
+	private Socket clientSocket;
+	private ObjectOutputStream outputToClient;
+	private ObjectInputStream inputFromClient;
 	
 	// VLC
-	private String vlcLibraryPath = ".\\vlc-2.0.1";
-		
+	private final String vlcLibraryPath = ".\\vlc-2.0.1";
+	
+	// Server Operation
+	Thread socketThread;
+	private MediaPlayerFactory mediaPlayerFactory ;
+	
 	public Server () {
 		
-		//Add shoutsown hook
+		//Add shutdown hook
 		addShutdownHook();
 		
 		//Setup VLC
 		setUpVLC();
 		
-		// get video list
+		// Process XML video list and store
 		XMLReader reader = new XMLReader();
-		videos = reader.getList(filename);
+		videos = reader.getList(videoListDirectory);
 		
+		// Generate Thumbnails for each VideoFile in videos
 		for(VideoFile vf : videos){
 			vf.setImagename(ScreenShotter.getScreenShot(vf.getFilename()));
 		}
-					
-		// Start networking thread
+		
+		// Create media player factory
+		this.mediaPlayerFactory = new MediaPlayerFactory();
+		
+		// Open socket, establish connection with client, and open stream
+		openSocket();
+		openOutputstream();
+		
+		// Start socket thread
 		socketThread = makeSocketThread();
 		socketThread.start();
 	}
+	
+	private Thread makeSocketThread(){
+		return new Thread("Socket") {
+			/* 
+			 * This thread is designed to be run in future releases for 
+			 * each of multiple clients. 
+			 * 
+			 */
+			public void run() {
+				// Store thumbnail in VideoFiles and send list to client.
+				// (allowing thumbnails to be stored in server, but visible in client)
+				videos.forEach((vf)->{vf.loadImage();});
+				writeToOutputStream(videos);
+				
+				
+				// Report
+				System.out.println("Server:: doing stream");
+				
+				while(true){
+					doStream();
+				}
+			}
+		};
+	}
+	
 	
 	private void addShutdownHook() {
 		Runtime.getRuntime().addShutdownHook(new Thread()
@@ -93,38 +127,17 @@ public class Server {
 		
 	}
 
-	private Thread makeSocketThread(){
-		return new Thread("Socket") {
-			public void run() {
-				
-				MediaPlayerFactory mediaPlayerFactory;
-				HeadlessMediaPlayer mediaPlayer;
-				
-				try {
-					openSocket();
-					openOutputstream();
-					writeListToSocket();
-					
-					mediaPlayerFactory = new MediaPlayerFactory();
-					mediaPlayer = mediaPlayerFactory.newHeadlessMediaPlayer();
-					
-					while(true){
-						//serverSocket.accept();
-						doStream(mediaPlayer);
-					}
-					
-				} 
-				catch (IOException e) {
-					System.out.println("Server:: ERROR on socket connection.");
-					e.printStackTrace();
-				}
-			}
-		};
-	}
+	
 	
 	private void openSocket(){
+		/*
+		 * Currently, this opens a socket, listens for connection, and
+		 * stores connected socket information for one connection.
+		 * Future iterations will allow for more than one connection.
+		 */
 		System.out.println("Server:: Opening Sockets");
-
+		
+		// Create Socket
 		try {
 			serverSocket = new ServerSocket(port);
 		} catch (IOException e) {
@@ -133,13 +146,14 @@ public class Server {
 		}
 		System.out.println("Server:: Opened serverSocket : " + serverSocket.toString());
 
-
+		// Waits for client to connect, then stores socket information
 		try {
 			clientSocket = serverSocket.accept();
 		} catch (IOException e) {
 			System.out.println("Server:: Could not open client connection");
 			e.printStackTrace();
 		}
+		// Report that client connected.
 		System.out.println("Server:: Opened clientSocket : " + clientSocket.toString());
 
 	}
@@ -151,6 +165,7 @@ public class Server {
 			System.out.println("Server:: Could not open client output stream ");
 			e.printStackTrace();
 		}
+		// Report
 		System.out.println("Server:: Started output stream ");
 		
 	}
@@ -162,49 +177,46 @@ public class Server {
 			System.out.println("Server:: Could not open client input stream ");
 			e.printStackTrace();
 		}
+		// Report
 		System.out.println("Server:: Started input stream ");
 	}
 	
-	private void doStream(HeadlessMediaPlayer mediaPlayer){
+	private void doStream(){
 		
-		System.out.println("Server:: doing stream");
+		// Create new headless media player
+		final HeadlessMediaPlayer mediaPlayer = mediaPlayerFactory.newHeadlessMediaPlayer();
 		
+		// Make sure that an input stream exists
 		if (inputFromClient == null){
 			openInputStream();
 		}
 		
-		VideoFile vf = null;
-
-		try {
-			vf = (VideoFile)inputFromClient.readObject();
-		} catch (ClassNotFoundException | IOException e) {
-			// TODO Auto-generated catch block
-			System.out.println("Server:: Error getting selected videofile from client ");
-			e.printStackTrace();
-		}
-		System.out.println("Server:: Streaming " + vf.getTitle());
-
-		String filename = "../"+vf.getFilename();
-				
-		String options = formatRtpStream("127.0.0.1", 5555);
+		// Receive object from stream (blocking), and process received
+		// object depending on type.
+		
+		final Object obj = readFromInputStream();
 		
 		
-		mediaPlayer.playMedia(filename, options, ":no-sout-rtp-sap", ":no-sout-standardsap",
-				":sout-all", ":sout-keep");
-		mediaPlayer.parseMedia();
-
-		
-		System.out.println("SERVER :: Length of video is : " + mediaPlayer.getLength()/1000);
-		
-		try {
-			outputToClient.writeObject((Long)mediaPlayer.getLength());
-		} catch (IOException e) {
-			System.out.println("SERVER :: Could not tell client length of video");
-			e.printStackTrace();
+		if(obj instanceof VideoFile){
+			/* If read object is a video file (request to play new video),
+			   start playing new video. */
+			
+			// Store VideoFile
+			final VideoFile vf = (VideoFile)obj;
+			
+			// Instruct mediaPlayer to stream new media based on vf data
+			String filename = "../"+vf.getFilename();
+			String options = formatRtpStream("127.0.0.1", 5555);
+			mediaPlayer.playMedia(filename, options, ":no-sout-rtp-sap", ":no-sout-standardsap",
+					":sout-all", ":sout-keep");
+			
+			// Confirm/report that server has started streaming new media
+			System.out.println("Server:: Streaming " + vf.getTitle());
 		}
 	}
 	
 	private void setUpVLC() {
+		// Set up VLC libraries
 		System.out.println("Server:: Setting up VLC");
 
 		NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), vlcLibraryPath);
@@ -212,32 +224,35 @@ public class Server {
 		
 	}
 	
-	private void writeListToSocket() throws IOException{
-		List<VideoFile> list = this.getList();
-		list.forEach((vf)->{vf.loadImage();});
-		
-		outputToClient.writeObject(list);
+	private Object readFromInputStream(){
+		// tries reading from stream, and returns object if successful
+		Object obj = null;
+		try {
+			obj = inputFromClient.readObject();
+		} catch (ClassNotFoundException e) {
+			System.out.println("Server:: Unable to read from stream!");
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.out.println("Server:: Unable to read from stream!");
+			e.printStackTrace();
+		}
+		return obj;
 	}
-
 	
-	public List<VideoFile> getList(){
-		return this.videos;
-	}
-	
-	public int getPort(){
-		return this.port;
-	}
-
-	public static void main(String[] args) {
-		System.out.println("Server:: Starting");
-
-		new Server();
+	private void writeToOutputStream(Object obj){
+		// tries writing object to output stream
+		try {
+			outputToClient.writeObject(obj);
+		} catch (IOException e) {
+			System.out.println("Server:: Unable to send object: " + obj.toString());
+			e.printStackTrace();
+		}
 	}
 	
 	public void Stop(){
+		// When called, stop threads, and close sockets.
 		
 		socketThread.interrupt();
-		
 		try {
 			this.clientSocket.close();
 		} catch (IOException e) {
@@ -253,6 +268,7 @@ public class Server {
 	}
 	
 	private String formatRtpStream(String serverAddress, int serverPort) {
+		// Builds string recognised by media player for streaming over IP
 		StringBuilder sb = new StringBuilder(60);
 		sb.append(":sout=#rtp{dst=");
 		sb.append(serverAddress);
@@ -261,6 +277,26 @@ public class Server {
 		sb.append(",mux=ts}");
 		return sb.toString();
 	}
+	
+	//////////////////////////// GETTERS ////////////////////////////
+	public List<VideoFile> getList(){
+		return this.videos;
+	}
+	
+	public int getPort(){
+		return this.port;
+	}
+	
+	
+	///////////////////////////// MAIN //////////////////////////////
+	
+	public static void main(String[] args) {
+		System.out.println("Server:: Starting");
+		new Server();
+	}
+	
+
+
 	
 }
 

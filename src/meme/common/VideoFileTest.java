@@ -14,19 +14,23 @@ public class VideoFileTest {
 	VideoFile File;
 	@Before
 	public void setUp() throws Exception {
+		// Create mock video file
 		File = new VideoFile("TestVideoFileID");
 		File.setFilename("TestVideoFileFileName");
 		File.setTitle("TestVideoFile");
 	}
 
 	@Test
-	public void test() {
-
+	public void testGetters(){
+	}
+	
+	@Test
+	public void isWriteableToStream() {
+		// Must be serializeable to write
 		assertTrue(File instanceof java.io.Serializable);
 		
-		//Should really try it and make sure the data doesn't get garbled?
-		
 		try {
+			// Try writing to a stream
 			new ObjectOutputStream(new ByteArrayOutputStream()).writeObject(File);
 		} catch (IOException e) {
 			fail("Couldn't write VideoFile to stream");

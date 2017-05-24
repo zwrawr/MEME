@@ -1,15 +1,14 @@
 package meme.common;
 
 public class StopWatch {
-
+	/*
+	 * This class is not used in this iteration. It is designed for the 
+	 * development of a trackbar, available in future releases.
+	 */
     private boolean running = false;
-
     private boolean paused = false;
-
     private long startTime = 0;
-
     private long pausedTime = 0;
-
     private long end = 0;
 
     public boolean isRunning() {
@@ -73,9 +72,7 @@ public class StopWatch {
     @Override
     public String toString() {
         long elapsed = elapsed();
- 
         int seconds = (int)((double)elapsed / Math.pow(10, 9));
-        
         return seconds + " Seconds";
     }
 

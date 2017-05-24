@@ -19,14 +19,18 @@ import javax.swing.border.EmptyBorder;
 import meme.common.VideoFile;
 
 public class VideoFileCellRenderer extends JPanel implements ListCellRenderer<VideoFile>{
-
+	////////////////////////// DESCRIPTION //////////////////////////
+	/* This Class contains the code for rendering the items in the
+	selection list with thumbnails taken from each file. */
+	
 	private static final long serialVersionUID = 4592886249018816517L;
 	
+	////////////////////////// ATTRIBUTES ///////////////////////////
 	JLabel title;
 	JLabel image;
-	
 	ImageIcon imageicon;
 
+	////////////////////////// CONSTRUCTOR //////////////////////////
 	public VideoFileCellRenderer(){
 		this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		
@@ -39,6 +43,7 @@ public class VideoFileCellRenderer extends JPanel implements ListCellRenderer<Vi
 		this.add(image);
 	}
 	
+	//////////////////////////// METHODS ////////////////////////////
 	@Override
     public Dimension getMinimumSize() {
         return new Dimension(150, 100);
