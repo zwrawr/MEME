@@ -122,7 +122,6 @@ public class Client {
 	
 	public static void main (String[] args){
 		System.out.println("Client:: Starting");
-		meme.server.Server.main(null);
 		new Client();
 	}
 }

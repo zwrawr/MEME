@@ -21,19 +21,31 @@ public class ScreenShotter {
 
 	static int width = 150;
 	
-	static float pos = 0.0075f;
+	static float pos = 0.01f;
 	
 	public static String getScreenShot(String filepath){
 		
-		File f = new File(filepath);
-		if(f.exists() && !f.isDirectory()) {
-			return "../"+filepath+".png";
+		String relpath = "../"+filepath;
+		System.out.println(filepath); 
+		
+		// check screen shot exists
+		File fpicture = new File(relpath+".png");
+		if(fpicture.exists() && !fpicture.isDirectory()) {
+			System.out.println("Screen shot already exists for " + relpath);
+			return relpath+".png";
+		}
+		
+		// check if video exist
+		File fvideo = new File(relpath);
+		if(!fvideo.exists() || fvideo.isDirectory()) {
+			System.out.println("Video doesn't exist at " + relpath);
+			return null;
 		}
 		
 		MediaPlayerFactory factory = new MediaPlayerFactory(VLC_ARGS);
         MediaPlayer mediaPlayer = factory.newHeadlessMediaPlayer();
         
-        mediaPlayer.startMedia("../"+filepath);
+        mediaPlayer.startMedia(relpath);
         mediaPlayer.setPosition(pos);
         try {
 			Thread.sleep(100);
@@ -42,9 +54,9 @@ public class ScreenShotter {
 			e.printStackTrace();
 		}
         
-        File file = new File("../"+filepath+".png");
+        File file = new File(relpath+".png");
         mediaPlayer.saveSnapshot(file, width, 0);
         
-        return "../"+filepath+".png";
+        return relpath+".png";
 	}
 }

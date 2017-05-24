@@ -35,6 +35,7 @@ public class Server {
 	// Server Operation
 	Thread socketThread;
 	private MediaPlayerFactory mediaPlayerFactory ;
+	private HeadlessMediaPlayer mediaPlayer;
 	
 	public Server () {
 		
@@ -55,6 +56,8 @@ public class Server {
 		
 		// Create media player factory
 		this.mediaPlayerFactory = new MediaPlayerFactory();
+		// Create new headless media player
+		this.mediaPlayer = mediaPlayerFactory.newHeadlessMediaPlayer();
 		
 		// Open socket, establish connection with client, and open stream
 		openSocket();
@@ -182,9 +185,6 @@ public class Server {
 	}
 	
 	private void doStream(){
-		
-		// Create new headless media player
-		final HeadlessMediaPlayer mediaPlayer = mediaPlayerFactory.newHeadlessMediaPlayer();
 		
 		// Make sure that an input stream exists
 		if (inputFromClient == null){
