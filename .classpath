@@ -7,7 +7,5 @@
 	<classpathentry kind="lib" path="vlcj-2.0.0/vlcj-2.0.0.jar"/>
 	<classpathentry kind="lib" path="vlcj-2.0.0/jna-3.4.0.jar"/>
 	<classpathentry kind="lib" path="vlcj-2.0.0/platform-3.4.0.jar"/>
-	<classpathentry kind="lib" path="M:/Year 2/Further Digital/Java/Java/vlcj-2.0.0/vlcj-1.2.2-test.jar"/>
-	<classpathentry kind="lib" path="M:/Year 2/Further Digital/Java/Java/vlcj-2.0.0/vlcj-2.0.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

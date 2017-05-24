@@ -1,3 +1,28 @@
+
+/*
+ * This is a modified version of the Player controls test class
+ * provided under the GNU GPL v3 by VLCJ.
+ */
+
+/*
+ * This file is part of VLCJ.
+ *
+ * VLCJ is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * VLCJ is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with VLCJ.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Copyright 2009-2016 Caprica Software Limited.
+ */
+
 package meme.client;
 
 import java.awt.BorderLayout;
@@ -6,8 +31,6 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -19,8 +42,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import uk.co.caprica.vlcj.binding.LibVlcConst;
-import uk.co.caprica.vlcj.player.MediaPlayer;
-import uk.co.caprica.vlcj.player.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 
 public class PlayerControlsPanel extends JPanel {
@@ -30,6 +51,7 @@ public class PlayerControlsPanel extends JPanel {
 	 * This class covers the controls panel at the base of the player
 	 * This file is based of a sample implimentaion provided in the jvlc
 	 * This version contains our own modifications to the class.
+	 * VLCJ's license is preserved at the top of this file for refrence
 	 */
 	
 	private static final long serialVersionUID = 965571066165214265L;

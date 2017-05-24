@@ -56,6 +56,7 @@ public class ScreenShotter {
         
         File file = new File(relpath+".png");
         mediaPlayer.saveSnapshot(file, width, 0);
+        mediaPlayer.release();
         
         return relpath+".png";
 	}
