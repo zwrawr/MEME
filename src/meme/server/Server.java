@@ -85,7 +85,7 @@ public class Server {
 				// Report
 				System.out.println("Server:: doing stream");
 				
-				while(true){
+				while(!Thread.interrupted()){
 					doStream();
 				}
 			}
@@ -229,12 +229,14 @@ public class Server {
 		Object obj = null;
 		try {
 			obj = inputFromClient.readObject();
-		} catch (ClassNotFoundException e) {
+		} catch (ClassNotFoundException | IOException e) {
+			// If we hit this the client was probably closed.
+			// In future we need to cleanly close this thread and go back to waiting
+			// for a client to connect. For now we can just close the sever.
 			System.out.println("Server:: Unable to read from stream!");
-			e.printStackTrace();
-		} catch (IOException e) {
-			System.out.println("Server:: Unable to read from stream!");
-			e.printStackTrace();
+			System.out.println("Server:: Client closed, closing");
+			this.Stop();
+			System.exit(-1);
 		}
 		return obj;
 	}
@@ -253,16 +255,30 @@ public class Server {
 		// When called, stop threads, and close sockets.
 		
 		socketThread.interrupt();
-		try {
-			this.clientSocket.close();
+		System.out.println("SERVER:: closing");
+
+    	try {
+			outputToClient.close();
 		} catch (IOException e) {
-			System.out.println("Server:: Unable to close client socket");
+			System.out.println("SERVER:: couldn't close output stream");
+			e.printStackTrace();
+		}		        
+    	try {
+    		inputFromClient.close();
+		} catch (IOException e) {
+			System.out.println("SERVER:: couldn't close input stream");
 			e.printStackTrace();
 		}
-		try {
-			this.serverSocket.close();
+    	try {
+    		clientSocket.close();
 		} catch (IOException e) {
-			System.out.println("Server:: Unable to close server socket");
+			System.out.println("SERVER:: couldn't close client socket");
+			e.printStackTrace();
+		}
+    	try {
+    		serverSocket.close();
+		} catch (IOException e) {
+			System.out.println("SERVER:: couldn't close server socket");
 			e.printStackTrace();
 		}
 	}
