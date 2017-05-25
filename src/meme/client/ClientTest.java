@@ -15,15 +15,18 @@ public class ClientTest {
 	private Client client;
 	private Server server;
 	
+	private static int tests = 0;
+
 	@Before
 	public void setUp() throws Exception {
-		this.server = Server.getInstance();
+		
+		this.server = new Server();
 		client = new Client();
 	}
 	
 	@After
 	public void cleanUp() throws Exception {
-		Server.Stop();
+		this.server.Stop();
 	}
 	
 	@Test

@@ -37,14 +37,7 @@ public class Server {
 	private MediaPlayerFactory mediaPlayerFactory ;
 	private HeadlessMediaPlayer mediaPlayer;
 	
-	// Singleton design pattern
-	private static Server Instance;
-	
-	// Bool to see if we should keep listening
-	private static boolean running = false;
-	
-	
-	private Server () {
+	public Server () {
 		
 		//Add shutdown hook
 		addShutdownHook();
@@ -66,35 +59,13 @@ public class Server {
 		// Create new headless media player
 		this.mediaPlayer = mediaPlayerFactory.newHeadlessMediaPlayer();
 		
-		Thread comm = new Thread(){
-			@Override
-		    public void run()
-		    {
-				// Open socket, establish connection with client, and open stream
-				openSocket();
-				openOutputstream();
-				
-				// Start socket thread
-				socketThread = makeSocketThread();
-				socketThread.start();
-		    }
-		};
-		comm.start();
-		System.out.println("SERVER:: finish init");
-	}
-	
-	public static Server getInstance(){
-		if (Server.Instance == null){
-			System.out.println("SERVER:: CREATING NEW SERVER");
-			Server.Instance = new Server();
-		}
+		// Open socket, establish connection with client, and open stream
+		openSocket();
+		openOutputstream();
 		
-		Server.running = true;
-		return Server.Instance;
-	}
-	
-	public static boolean isRunning(){
-		return Server.running;
+		// Start socket thread
+		socketThread = makeSocketThread();
+		socketThread.start();
 	}
 	
 	private Thread makeSocketThread(){
@@ -114,8 +85,7 @@ public class Server {
 				// Report
 				System.out.println("Server:: doing stream");
 				
-				while(Server.running){
-					//System.out.println("Running : " + Server.running );
+				while(true){
 					doStream();
 				}
 			}
@@ -132,34 +102,25 @@ public class Server {
 				System.out.println("SERVER:: closing");
 
 	        	try {
-	        		if(outputToClient != null){
-	        			outputToClient.close();
-	        		}
+					outputToClient.close();
 				} catch (IOException e) {
 					System.out.println("SERVER:: couldn't close output stream");
 					e.printStackTrace();
 				}		        
 	        	try {
-	        		if(inputFromClient != null){
-	        			inputFromClient.close();
-	        		}
+	        		inputFromClient.close();
 				} catch (IOException e) {
 					System.out.println("SERVER:: couldn't close input stream");
 					e.printStackTrace();
 				}
 	        	try {
-	        		if(clientSocket != null && !clientSocket.isClosed()){
-	        			clientSocket.close();
-	        		}
+	        		clientSocket.close();
 				} catch (IOException e) {
 					System.out.println("SERVER:: couldn't close client socket");
 					e.printStackTrace();
 				}
 	        	try {
-	        		if(serverSocket != null && !serverSocket.isClosed()){
-	        			serverSocket.close();
-	        			serverSocket.setReuseAddress(true);
-	        		}
+	        		serverSocket.close();
 				} catch (IOException e) {
 					System.out.println("SERVER:: couldn't close server socket");
 					e.printStackTrace();
@@ -213,12 +174,6 @@ public class Server {
 	}
 	
 	private void openInputStream(){
-		
-		if (!clientSocket.isClosed()){
-			System.out.println("SERVER:: Attempted to read from a closed socket!");
-			return;
-		}
-		
 		try {
 			inputFromClient = new ObjectInputStream(clientSocket.getInputStream());
 		} catch (IOException e) {
@@ -270,11 +225,6 @@ public class Server {
 	}
 	
 	private Object readFromInputStream(){
-		
-		if(inputFromClient == null || clientSocket == null || clientSocket.isClosed()){
-			return null;
-		}
-		
 		// tries reading from stream, and returns object if successful
 		Object obj = null;
 		try {
@@ -299,33 +249,22 @@ public class Server {
 		}
 	}
 	
-	public static void Stop(){
+	public void Stop(){
 		// When called, stop threads, and close sockets.
-				
-		if (Server.Instance == null){
-			return;
-		}
 		
-		Server.running = false;
-		
-		
-		Server s = Server.Instance;
-		s.socketThread.interrupt();
+		socketThread.interrupt();
 		try {
-			s.clientSocket.close();
+			this.clientSocket.close();
 		} catch (IOException e) {
 			System.out.println("Server:: Unable to close client socket");
 			e.printStackTrace();
 		}
 		try {
-			s.serverSocket.close();
+			this.serverSocket.close();
 		} catch (IOException e) {
 			System.out.println("Server:: Unable to close server socket");
 			e.printStackTrace();
 		}
-		
-		// kill this instance by removing its reference
-		Server.Instance = null;
 	}
 	
 	private String formatRtpStream(String serverAddress, int serverPort) {
@@ -353,11 +292,10 @@ public class Server {
 	
 	public static void main(String[] args) {
 		System.out.println("Server:: Starting");
-		Server s = Server.getInstance();
+		new Server();
 	}
 	
 
 
 	
 }
-

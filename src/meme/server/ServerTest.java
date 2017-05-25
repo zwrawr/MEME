@@ -28,7 +28,12 @@ public class ServerTest {
 	public void setup(){
 		
 		System.out.println("TEST:: Starting Server");
-		server = Server.getInstance();
+		server = new Server();
+	}
+	
+	@After
+	public void cleanup(){
+		this.server.Stop();
 	}
 	
 	@Test
