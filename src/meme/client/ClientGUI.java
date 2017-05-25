@@ -167,6 +167,7 @@ public class ClientGUI extends JFrame{
 		this.add(this.menu, BorderLayout.WEST);
 		
         SwingUtilities.updateComponentTreeUI(this);
+        this.validate();
         this.setVisible(true);
 	}
 
@@ -185,14 +186,18 @@ public class ClientGUI extends JFrame{
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.setLayoutOrientation(JList.VERTICAL);
 		list.setVisibleRowCount(-1);
+		
 		// Create consumer to detect and process item selection in the list.
 		Consumer<Integer> consumer = (i) -> updateSelection(i);
 		list.getSelectionModel().addListSelectionListener(new ConsumerListSelectionHandler(consumer));
+		
+		// Make the list scroll when it has a lot of items in it
 		JScrollPane listScroll = new JScrollPane(list);	
+		listScroll.setPreferredSize(new Dimension(162,162));
 		
 		// Add list to panel
 		listPanel.add(listScroll,BorderLayout.CENTER);
-		
+
 		// Return panel
 		return listPanel;
 	}

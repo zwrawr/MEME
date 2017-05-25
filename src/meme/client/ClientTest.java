@@ -4,18 +4,26 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import meme.common.VideoFile; 
+import meme.common.VideoFile;
+import meme.server.Server; 
 
 public class ClientTest {
 	private Client client;
+	private Server server;
 	
 	@Before
 	public void setUp() throws Exception {
-		meme.server.Server.main(null);
+		this.server = Server.getInstance();
 		client = new Client();
+	}
+	
+	@After
+	public void cleanUp() throws Exception {
+		Server.Stop();
 	}
 	
 	@Test

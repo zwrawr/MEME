@@ -16,17 +16,19 @@ import java.util.List;
 
 
 public class ServerTest {
+		
+	private Thread thread;
+	
+	private int serverPort = 1338;
+	private String serverIP = "127.0.0.1";
 	
 	private Server server;
 	
 	@Before
 	public void setup(){
-		server = new Server();
-	}
-	
-	@After
-	public void cleanup(){
-		server.Stop();
+		
+		System.out.println("TEST:: Starting Server");
+		server = Server.getInstance();
 	}
 	
 	@Test
@@ -61,12 +63,12 @@ public class ServerTest {
 		else{
 			fail("videoList was null");
 		}
-
-	}
-
-	//@Test
-	public void serverTest(){
-		// assume the server is working if it's returning a list with the correct number of videofiles
-		assertTrue(server.getList().size() == 3 );
+		
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
